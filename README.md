@@ -67,7 +67,7 @@ Cette méthode rend le code évolutif pour n'importe quelle nouvelle forme.
 
 ---
 
-## 开发心得
+## 技术细节
 
 这是一个使用 Java + Swing 开发的俄罗斯方块项目。我在边学边做的过程中，将逻辑分成了三个核心模块：
 
