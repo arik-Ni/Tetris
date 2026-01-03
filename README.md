@@ -1,6 +1,8 @@
 
 # Tetris - Java Swing Implementation
 
+![动画](https://github.com/user-attachments/assets/3ca18444-3ee5-4fbc-8e07-f3790bff9a8e)
+
 ## About / À Propos / 关于
 This project is a classic Tetris game developed using Java and Swing. It is a personal project focused on blending mathematical logic with practical UI development.
 
