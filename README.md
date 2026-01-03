@@ -39,7 +39,7 @@ The project is structured into three specialized classes to ensure clean separat
 
 ### The Mathematical Approach (Rotation)
 
-To HR and technical interviewers: Instead of using conditional switches for each orientation, I implemented a Matrix Rotation algorithm. For a shape represented as an `N x N` matrix:
+Instead of using conditional switches for each orientation, I implemented a Matrix Rotation algorithm. For a shape represented as an `N x N` matrix:
 
 * **Logic**: A clockwise 90 degree rotation is achieved by transposing the matrix and then reversing each row.
 * **Formula**:
