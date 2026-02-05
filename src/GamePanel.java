@@ -5,14 +5,14 @@ import javax.swing.border.LineBorder;
 import java.util.ArrayList;
 import java.util.List;
 
-//GamePanel 类：处理俄罗斯方块的游戏逻辑和渲染
+// 游戏主面板，管逻辑也管画图 | Le cœur du jeu : logique et rendu
 public class GamePanel extends JPanel {
-    // 游戏网格参数
+    // 棋盘格大小，10x18是经典比例 | Taille de la grille, 10x18 c'est le standard
     private static final int GRID_WIDTH = 10;
     private static final int GRID_HEIGHT = 18;
     private static final int CELL_SIZE = 40;
 
-    // 游戏状态
+    // 游戏核心变量 | Variables d'état
     private int[][] grid;
     private Tetromino currentTetromino;
     private Tetromino nextTetromino;
@@ -21,29 +21,29 @@ public class GamePanel extends JPanel {
     private boolean gameOver = false;
     private int score = 0;
 
-    // 计时器状态
-    private long startTime; // 游戏开始或恢复时的时间戳
-    private long totalElapsedTime = 0; // 累计经过的时间（毫秒）
-    private boolean isPaused = false; // 暂停状态标记
+    // 计时器相关，算累计时间用的 | Gestion du temps et chrono
+    private long startTime; // 记录开始或恢复那一刻的时间戳 Horodatage de début
+    private long totalElapsedTime = 0; // 存档已经跑了多久 Temps cumulé
+    private boolean isPaused = false; // 暂停开关
 
-    // 游戏循环
+    // 游戏下落的主循环 | Timer principal pour la chute
     private Timer gameTimer;
-    private static final int GAME_SPEED = 500;
+    private static final int GAME_SPEED = 500; // 0.5秒掉一格，刚好 Vitesse de chute (0.5s)
 
-    // 延迟消除计时器和状态
+    // 消行时的停顿效果，不然闪太快看不清 | Délai d'effacement pour l'animation
     private Timer clearDelayTimer;
-    private static final int CLEAR_DELAY = 500; // 0.5 秒
-    private boolean isClearing = false; // 标记是否正在执行延迟清除（暂停主游戏）
-    private List<Integer> linesToClear = new ArrayList<>(); // 存储待清除的行索引
+    private static final int CLEAR_DELAY = 500; // 留半秒给玩家反应 0.5s de pause
+    private boolean isClearing = false; // 正在播动画时得锁住键盘 Bloquer les actions pendant l'animation
+    private List<Integer> linesToClear = new ArrayList<>(); // 攒着哪些行该炸了 Lignes à supprimer
 
-    // 返回菜单的回调
+    // 往回跳菜单的回调 | Callback pour retourner au menu
     private Runnable returnToMenuCallback;
 
-    // 网格绘制位置（居中计算）
+    // 居中显示时算出的偏移量 | Offsets pour centrer la grille
     private int gridOffsetX;
     private int gridOffsetY;
 
-    // 声明按钮
+    // 各种按钮组件 | Les boutons de l'interface
     private JButton btnRestart;
     private JButton btnExit;
     private JButton btnPause;
@@ -54,11 +54,11 @@ public class GamePanel extends JPanel {
     public GamePanel(Runnable returnToMenuCallback) {
         this.returnToMenuCallback = returnToMenuCallback;
 
-        setBackground(new Color(30, 30, 30));
+        setBackground(new Color(30, 30, 30)); // 背景深色点，护眼 Mode sombre
         setFocusable(true);
         setPreferredSize(new Dimension(800, 720));
 
-        setLayout(null);
+        setLayout(null); // 手动布局，方便控制位置 Layout manuel
 
         setupControlPanel();
 
@@ -69,7 +69,7 @@ public class GamePanel extends JPanel {
         startGameLoop();
     }
 
-    //创建与主菜单风格一致的按钮
+    // 按钮样式统一一下，省得写重复代码 | Style commun pour les boutons du jeu
 
     private JButton createGameStyledButton(String text) {
         JButton button = new JButton(text);
@@ -86,7 +86,7 @@ public class GamePanel extends JPanel {
         return button;
     }
 
-    //设置左上角控制按钮面板
+    // 顶上那一排控制按钮 | Barre d'outils en haut
 
     private void setupControlPanel() {
         JPanel controlPanel = new JPanel();
@@ -109,6 +109,7 @@ public class GamePanel extends JPanel {
         this.add(controlPanel);
         controlPanel.setBounds(0, 0, 450, 60);
 
+        // 窗口大小变了得跟着动 | Ajustement si on redimensionne
         this.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
@@ -117,47 +118,47 @@ public class GamePanel extends JPanel {
         });
     }
 
-    //暂停/恢复游戏
+    // 暂停/继续切换逻辑 | Basculer entre pause et jeu
 
     private void togglePause() {
-        if (gameOver || isClearing) return; // 消除延迟期间不能暂停
+        if (gameOver || isClearing) return; // 正在炸行或者已经挂了就别点了
 
         if (gameTimer.isRunning()) {
             gameTimer.stop();
             btnPause.setText("Resume");
 
-            // 计时器/暂停逻辑，累积时间
+            // 停下那一刻，把这段时间存起来 Accumuler le temps écoulé
             totalElapsedTime += (System.currentTimeMillis() - startTime);
             isPaused = true;
         } else {
             gameTimer.start();
             btnPause.setText("Pause");
 
-            // 计时器/恢复逻辑，重置起始时间
+            // 重新开始跑，重置起点时间 Reset le point de départ
             startTime = System.currentTimeMillis();
             isPaused = false;
         }
-        requestFocusInWindow();
+        requestFocusInWindow(); // 焦点拿回来，不然键盘没反应 Focus pour le clavier
         repaint();
     }
 
-    //初始化游戏
+    // 开局初始化 | Setup initial du jeu
 
     private void initializeGame() {
         grid = new int[GRID_HEIGHT][GRID_WIDTH];
 
-        // 明确初始化 current 和 next Tetromino
+        // 随机刷两个块出来 Générer les premiers blocs
         currentTetromino = Tetromino.createRandom();
         nextTetromino = Tetromino.createRandom();
 
-        currentX = GRID_WIDTH / 2 - 1;
+        currentX = GRID_WIDTH / 2 - 1; // 居中生成 Position de départ
         currentY = 0;
 
+        // 一出生就撞墙，说明顶满了，Game Over dès le début
         if (!isValidPosition(currentX, currentY, currentTetromino)) {
             gameOver = true;
         }
 
-        // 计时器初始化
         startTime = System.currentTimeMillis();
         totalElapsedTime = 0;
         isPaused = false;
@@ -165,10 +166,10 @@ public class GamePanel extends JPanel {
         linesToClear.clear();
     }
 
-    //清空并重玩当前游戏
+    // 推倒重来 | Reset complet de la partie
 
     private void restartGame() {
-        // 隐藏 Game Over 按钮
+        // 清理掉结算界面的按钮 Nettoyer l'interface de fin
         if (btnGameOverReplay != null) {
             this.remove(btnGameOverReplay);
             this.remove(btnGameOverExit);
@@ -179,14 +180,12 @@ public class GamePanel extends JPanel {
         score = 0;
         gameOver = false;
 
-        // 明确创建当前方块和下一个方块
         currentTetromino = Tetromino.createRandom();
         nextTetromino = Tetromino.createRandom();
 
         currentX = GRID_WIDTH / 2 - 1;
         currentY = 0;
 
-        // 检查初始方块是否合法
         if (!isValidPosition(currentX, currentY, currentTetromino)) {
             gameOver = true;
         }
@@ -196,7 +195,7 @@ public class GamePanel extends JPanel {
         }
         btnPause.setText("Pause");
 
-        // 计时器重置
+        // 计时也得归零 Reset chrono
         startTime = System.currentTimeMillis();
         totalElapsedTime = 0;
         isPaused = false;
@@ -207,7 +206,7 @@ public class GamePanel extends JPanel {
         repaint();
     }
 
-    //处理刷新按钮点击时的确认对话框
+    // 刷新确认确认，防止手滑 | Popup de confirmation pour recommencer
 
     private void showRestartConfirmation() {
         boolean wasRunning = gameTimer.isRunning();
@@ -231,13 +230,13 @@ public class GamePanel extends JPanel {
             restartGame();
         } else {
             if (wasRunning) {
-                gameTimer.start();
+                gameTimer.start(); // 点错了就继续跑 Reprendre si annulé
             }
         }
         requestFocusInWindow();
     }
 
-    //处理退出按钮/ESC按下的确认对话框
+    // 退出确认，回主菜单 | Retour au menu principal
 
     private void showExitConfirmation() {
         boolean wasRunning = gameTimer.isRunning();
@@ -267,6 +266,7 @@ public class GamePanel extends JPanel {
         requestFocusInWindow();
     }
 
+    // 算一下格子画在哪能居中 | Centrer la zone de jeu
     private void calculateGridOffset() {
         int gridPixelWidth = GRID_WIDTH * CELL_SIZE;
         int gridPixelHeight = GRID_HEIGHT * CELL_SIZE;
@@ -275,6 +275,7 @@ public class GamePanel extends JPanel {
         gridOffsetY = (getHeight() - gridPixelHeight) / 2;
     }
 
+    // 下一个块顶上去，再抽个新的 | Nouveau bloc et mise à jour de la prévisualisation
     private void spawnNewTetromino() {
         currentTetromino = nextTetromino;
         nextTetromino = Tetromino.createRandom();
@@ -284,11 +285,12 @@ public class GamePanel extends JPanel {
 
         if (!isValidPosition(currentX, currentY, currentTetromino)) {
             gameOver = true;
-            gameTimer.stop(); // 游戏结束时停止计时器
+            gameTimer.stop();
             btnPause.setText("Pause");
         }
     }
 
+    // 碰撞检测核心，别让方块钻墙里 | Détection de collision
     private boolean isValidPosition(int x, int y, Tetromino tetromino) {
         int[][] shape = tetromino.getShape();
         int shapeSize = shape.length;
@@ -299,10 +301,12 @@ public class GamePanel extends JPanel {
                     int gridX = x + c;
                     int gridY = y + r;
 
+                    // 越界检查 Check les limites
                     if (gridX < 0 || gridX >= GRID_WIDTH || gridY >= GRID_HEIGHT) {
                         return false;
                     }
 
+                    // 撞到已经固定的块了 Check les blocs fixés
                     if (gridY >= 0 && grid[gridY][gridX] != 0) {
                         return false;
                     }
@@ -312,13 +316,14 @@ public class GamePanel extends JPanel {
         return true;
     }
 
-    //方块锁定逻辑：现在在检测到满行时，会启动延迟消除计时器
+    // 落地锁死逻辑：如果有消行，得先停一下播动画 | Verrouillage du bloc et déclenchement de l'effacement
 
     private void lockTetromino() {
         int[][] shape = currentTetromino.getShape();
         int shapeSize = shape.length;
         int colorValue = currentTetromino.getColor().getRGB();
 
+        // 把方块颜色填进网格里 Fixer les pixels
         for (int r = 0; r < shapeSize; r++) {
             for (int c = 0; c < shapeSize; c++) {
                 if (shape[r][c] == 1) {
@@ -334,33 +339,29 @@ public class GamePanel extends JPanel {
         int linesCleared = detectCompleteLines();
 
         if (linesCleared > 0) {
-            // 暂停游戏下落
-            gameTimer.stop();
+            gameTimer.stop(); // 别往下掉了，先处理动画 Stop la chute pour l'animation
             isClearing = true;
 
-            // 启动延迟计时器
+            // 延迟半秒再清，让玩家看一眼哪行炸了
             clearDelayTimer = new Timer(CLEAR_DELAY, e -> {
-                // 延迟结束后执行实际消除
                 clearDelayTimer.stop();
-                actuallyClearLines();
+                actuallyClearLines(); // 动手清行
                 isClearing = false;
 
-                // 消除完成后生成新方块并重启游戏
                 spawnNewTetromino();
-                gameTimer.start();
-                btnPause.setText("Pause"); // 确保暂停按钮文本正确显示
+                gameTimer.start(); // 搞定，继续掉 Nouveau bloc et on reprend
+                btnPause.setText("Pause");
                 repaint();
             });
-            clearDelayTimer.setRepeats(false); // 只执行一次
+            clearDelayTimer.setRepeats(false);
             clearDelayTimer.start();
 
         } else {
-            // 没有满行则直接生成下一个方块
-            spawnNewTetromino();
+            spawnNewTetromino(); // 没消行就直接出下一个
         }
     }
 
-    //只检测满行，并将满行索引存储到 linesToClear 列表中
+    // 看看哪些行填满了，记下索引 | Identifier les lignes pleines
 
     private int detectCompleteLines() {
         linesToClear.clear();
@@ -380,33 +381,33 @@ public class GamePanel extends JPanel {
         return linesToClear.size();
     }
 
-    //实际执行消除操作和加分
+    // 真正动手删行、挪位置、加分 | Suppression réelle des lignes et calcul du score
 
     private void actuallyClearLines() {
         if (linesToClear.isEmpty()) return;
 
-        // 从下往上清除，以确保索引正确
+        // 必须从下往上删，不然索引全乱了 Trier du bas vers le haut
         linesToClear.sort((a, b) -> b - a);
 
         for (int row : linesToClear) {
-            // 向上移动上方所有行
+            // 上面的行往下挤一行 Tout décaler vers le bas
             for (int r = row; r > 0; r--) {
                 grid[r] = grid[r - 1].clone();
             }
-            // 顶部创建新空行
-            grid[0] = new int[GRID_WIDTH];
-            score += 100;
+            grid[0] = new int[GRID_WIDTH]; // 最顶上补个空的
+            score += 100; // 一行100分，简单粗暴 100 points par ligne
         }
         linesToClear.clear();
     }
 
+    // 各种位移逻辑，都要检查碰撞 | Fonctions de mouvement
     private void moveDown() {
-        if (gameOver || isClearing) return; // 消除延迟期间不能移动
+        if (gameOver || isClearing) return;
 
         if (isValidPosition(currentX, currentY + 1, currentTetromino)) {
             currentY++;
         } else {
-            lockTetromino();
+            lockTetromino(); // 到底了，锁死
         }
     }
     private void moveLeft() {
@@ -436,14 +437,16 @@ public class GamePanel extends JPanel {
         lockTetromino();
     }
 
+    // 收尾工作，关掉计时器 | Arrêter les timers avant de partir
     private void returnToMenu() {
         if (gameTimer != null) gameTimer.stop();
-        if (clearDelayTimer != null) clearDelayTimer.stop(); // 停止所有计时器
+        if (clearDelayTimer != null) clearDelayTimer.stop();
         if (returnToMenuCallback != null) {
             returnToMenuCallback.run();
         }
     }
 
+    // 键盘监听，ESC随时准备跑路 | Gestion des touches clavier
     private void setupKeyListener() {
         addKeyListener(new KeyAdapter() {
             @Override
@@ -454,7 +457,7 @@ public class GamePanel extends JPanel {
                     return;
                 }
 
-                // 只有在游戏运行且不处于清除延迟状态时才响应操作
+                // 没暂停、没挂、没播动画时才理你 Seul actif si le jeu tourne
                 if (gameTimer.isRunning() && !gameOver && !isClearing) {
                     switch (e.getKeyCode()) {
                         case KeyEvent.VK_LEFT:
@@ -479,9 +482,10 @@ public class GamePanel extends JPanel {
         });
     }
 
+    // 游戏心脏跳动的地方 | Le cœur du jeu (loop)
     private void startGameLoop() {
         gameTimer = new Timer(GAME_SPEED, e -> {
-            if (!gameOver && !isClearing) { // 延迟清除期间不执行下落
+            if (!gameOver && !isClearing) {
                 moveDown();
                 repaint();
             }
@@ -494,6 +498,7 @@ public class GamePanel extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
+        // 开启抗锯齿，看着舒服点 Antialiasing pour le confort
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         calculateGridOffset();
@@ -513,19 +518,18 @@ public class GamePanel extends JPanel {
         }
     }
 
-    //绘制游戏计时器
+    // 画计时器，算时间有点绕 | Dessin du chrono, calcul un peu tricky
 
     private void drawTimer(Graphics2D g2d) {
-        //  获取当前累计时间
         long currentTime;
-        // 延迟清除期间也算作暂停状态
+        // 只有在真正跑的时候才算实时时间 Calcul du temps réel vs temps figé
         if (isPaused || gameOver || isClearing) {
             currentTime = totalElapsedTime;
         } else {
             currentTime = totalElapsedTime + (System.currentTimeMillis() - startTime);
         }
 
-        // 格式化时间 (HH:MM:SS)
+        // 把毫秒转成 00:00:00 格式 Formatage HH:MM:SS
         long seconds = currentTime / 1000;
         long minutes = seconds / 60;
         long hours = minutes / 60;
@@ -535,7 +539,7 @@ public class GamePanel extends JPanel {
 
         String timeStr = String.format("%02d:%02d:%02d", hours, minutes, seconds);
 
-        // 计算位置和大小 (继承自 Next 框)
+        // UI 布局位置，跟 Next 框对齐 | Position alignée sur l'aperçu du prochain bloc
         int previewWidth = 4 * CELL_SIZE;
         int previewHeight = 4 * CELL_SIZE;
         int previewX = gridOffsetX + (GRID_WIDTH * CELL_SIZE) + 30;
@@ -547,12 +551,11 @@ public class GamePanel extends JPanel {
         int timerBoxX = previewX;
         int timerBoxY = previewY + previewHeight + verticalGap;
 
-        // 绘制标题 "TIMER"
+        // 画标题和框框 Dessin de l'interface du timer
         g2d.setColor(Color.WHITE);
         g2d.setFont(new Font("Arial", Font.BOLD, 20));
         g2d.drawString("TIMER", timerBoxX, timerBoxY - 10);
 
-        //  绘制背景和边框
         g2d.setColor(new Color(50, 50, 50));
         g2d.fillRect(timerBoxX, timerBoxY, timerBoxWidth, timerBoxHeight);
 
@@ -560,7 +563,7 @@ public class GamePanel extends JPanel {
         g2d.setStroke(new BasicStroke(2));
         g2d.drawRect(timerBoxX, timerBoxY, timerBoxWidth, timerBoxHeight);
 
-        //  绘制时间文本
+        // 时间数字用黄色，醒目点 Jaune pour le temps
         g2d.setFont(new Font("Arial", Font.BOLD, 30));
         g2d.setColor(Color.YELLOW);
 
@@ -568,13 +571,14 @@ public class GamePanel extends JPanel {
         int textWidth = fm.stringWidth(timeStr);
         int ascent = fm.getAscent();
 
-        // 居中显示文本
+        // 完美居中 Centrage précis
         int textX = timerBoxX + (timerBoxWidth - textWidth) / 2;
         int textY = timerBoxY + (timerBoxHeight + ascent) / 2 - 5;
 
         g2d.drawString(timeStr, textX, textY);
     }
 
+    // 画预览块，提示玩家下一步该怎么走 | Affichage du prochain bloc (NEXT)
     private void drawNextTetromino(Graphics2D g2d) {
         if (nextTetromino == null) return;
 
@@ -597,6 +601,7 @@ public class GamePanel extends JPanel {
         int[][] shape = nextTetromino.getShape();
         g2d.setColor(nextTetromino.getColor());
 
+        // 4x4 的块和 3x3 的块偏移量不同，得微调一下 Ajustement selon la forme
         int cellOffset = shape.length == 4 ? 0 : (CELL_SIZE / 2);
 
         for (int r = 0; r < shape.length; r++) {
@@ -614,10 +619,12 @@ public class GamePanel extends JPanel {
         }
     }
 
+    // 画背景网格，辅助对齐 | La grille de fond
     private void drawGrid(Graphics2D g2d) {
         g2d.setColor(Color.BLACK);
         g2d.fillRect(gridOffsetX, gridOffsetY, GRID_WIDTH * CELL_SIZE, GRID_HEIGHT * CELL_SIZE);
 
+        // 细灰线，别太亮 Lignes discrètes
         g2d.setColor(new Color(80, 80, 80));
         for (int row = 0; row <= GRID_HEIGHT; row++) {
             g2d.drawLine(gridOffsetX, gridOffsetY + row * CELL_SIZE,
@@ -633,6 +640,7 @@ public class GamePanel extends JPanel {
         g2d.drawRect(gridOffsetX, gridOffsetY, GRID_WIDTH * CELL_SIZE, GRID_HEIGHT * CELL_SIZE);
     }
 
+    // 画那些已经躺平的块 | Dessin des blocs déjà posés
     private void drawLockedTetrominos(Graphics2D g2d) {
         for (int row = 0; row < GRID_HEIGHT; row++) {
             for (int col = 0; col < GRID_WIDTH; col++) {
@@ -649,8 +657,9 @@ public class GamePanel extends JPanel {
         }
     }
 
+    // 画正在掉的那一个块 | Dessin du bloc en mouvement
     private void drawCurrentTetromino(Graphics2D g2d) {
-        if (isClearing) return; // 延迟清除期间不绘制下落方块
+        if (isClearing) return; // 正在播消行动画时，先把它藏起来 Cache pendant l'animation
 
         int[][] shape = currentTetromino.getShape();
         int shapeSize = shape.length;
@@ -661,7 +670,7 @@ public class GamePanel extends JPanel {
                 if (shape[r][c] == 1) {
                     int x = gridOffsetX + (currentX + c) * CELL_SIZE;
                     int y = gridOffsetY + (currentY + r) * CELL_SIZE;
-                    if (y >= gridOffsetY) {
+                    if (y >= gridOffsetY) { // 没出顶部的部分不画 Ne pas dessiner hors écran
                         g2d.fillRect(x, y, CELL_SIZE, CELL_SIZE);
                         g2d.setColor(Color.BLACK);
                         g2d.drawRect(x, y, CELL_SIZE, CELL_SIZE);
@@ -672,6 +681,7 @@ public class GamePanel extends JPanel {
         }
     }
 
+    // 分数显示在右上角 | Score affiché en haut à droite
     private void drawScore(Graphics2D g2d) {
         g2d.setColor(Color.WHITE);
         g2d.setFont(new Font("Arial", Font.BOLD, 28));
@@ -686,7 +696,7 @@ public class GamePanel extends JPanel {
         g2d.drawString(scoreText, x, y);
     }
 
-    // 创建 Game Over 界面的按钮
+    // 挂了之后的结算界面按钮 | Boutons post-défaite
     private void createGameOverButtons() {
         btnGameOverReplay = createGameStyledButton("Replay");
         btnGameOverReplay.addActionListener(e -> restartGame());
@@ -694,7 +704,6 @@ public class GamePanel extends JPanel {
         btnGameOverExit = createGameStyledButton("Exit");
         btnGameOverExit.addActionListener(e -> showExitConfirmation());
 
-        // 计算按钮位置（在 Game Over 消息下方）
         int buttonWidth = 120;
         int buttonHeight = 40;
         int gap = 20;
@@ -710,8 +719,9 @@ public class GamePanel extends JPanel {
         this.add(btnGameOverExit);
     }
 
+    // 游戏结束的遮罩和提示词 | Message Game Over et overlay
     private void drawGameOverMessage(Graphics2D g2d) {
-        g2d.setColor(new Color(0, 0, 0, 180));
+        g2d.setColor(new Color(0, 0, 0, 180)); // 屏幕黑一下，有氛围
         g2d.fillRect(0, 0, getWidth(), getHeight());
 
         g2d.setColor(Color.RED);
@@ -729,7 +739,6 @@ public class GamePanel extends JPanel {
         x = (getWidth() - fm.stringWidth(scoreText)) / 2;
         g2d.drawString(scoreText, x, y + 90);
 
-        // 创建按钮（只创建一次）
         if (!gameOverButtonsCreated) {
             createGameOverButtons();
             gameOverButtonsCreated = true;

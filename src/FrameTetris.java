@@ -5,14 +5,14 @@ import javax.swing.UIManager;
 
 public class FrameTetris {
 
-    // 定义统一的按钮尺寸
+    // 定义统一的按钮尺寸 | Définit une taille de bouton uniforme
     private static final int BUTTON_WIDTH = 200;
     private static final int BUTTON_HEIGHT = 60;
 
     private static JFrame frame;
     private static JPanel menuPanel;
 
-    // 辅助方法：快速创建具有相同风格的按钮
+    // 辅助方法：快速创建具有相同风格的按钮 | Méthode auxiliaire : créer rapidement des boutons avec le même style
     private static JButton createStyledButton(String text) {
         JButton button = new JButton(text);
 
@@ -31,7 +31,7 @@ public class FrameTetris {
         return button;
     }
 
-    //显示菜单界面
+    // 显示菜单界面 | Afficher l'interface du menu
 
     private static void showMenu() {
         frame.getContentPane().removeAll();
@@ -40,10 +40,10 @@ public class FrameTetris {
         frame.repaint();
     }
 
-    //启动游戏
+    // 启动游戏 | Démarrer le jeu
 
     private static void startGame() {
-        // 创建游戏面板，传入返回菜单的回调
+        // 创建游戏面板，传入返回菜单的回调 | Créer le panneau de jeu, passer le rappel (callback) pour retourner au menu
         GamePanel gamePanel = new GamePanel(() -> showMenu());
 
         frame.getContentPane().removeAll();
@@ -51,7 +51,7 @@ public class FrameTetris {
         frame.revalidate();
         frame.repaint();
 
-        // 给 GamePanel 焦点，使其能接收键盘输入
+        // 给 GamePanel 焦点，使其能接收键盘输入 | Donner le focus au GamePanel pour qu'il puisse recevoir les entrées clavier
         gamePanel.requestFocusInWindow();
     }
 
@@ -60,13 +60,13 @@ public class FrameTetris {
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // 创建菜单面板
+        // 创建菜单面板 | Créer le panneau du menu
         menuPanel = new JPanel();
 
         menuPanel.setLayout(new BoxLayout(menuPanel, BoxLayout.Y_AXIS));
         menuPanel.setBackground(Color.ORANGE);
 
-        // 大标题
+        // 大标题 | Grand titre
         JLabel titleLabel = new JLabel("T E T R I S");
         titleLabel.setFont(new Font("Monospaced", Font.BOLD, 130));
         titleLabel.setForeground(Color.BLUE);
@@ -76,19 +76,19 @@ public class FrameTetris {
         menuPanel.add(titleLabel);
         menuPanel.add(Box.createVerticalStrut(110));
 
-        // 创建所有按钮
+        // 创建所有按钮 | Créer tous les boutons
         JButton buttonPlay = createStyledButton("Play");
         JButton buttonHowTo = createStyledButton("How to Play");
         JButton buttonCredits = createStyledButton("Credits");
         JButton buttonExit = createStyledButton("Exit");
 
-        // 对齐方式
+        // 对齐方式 | Alignement
         buttonPlay.setAlignmentX(Component.CENTER_ALIGNMENT);
         buttonHowTo.setAlignmentX(Component.CENTER_ALIGNMENT);
         buttonCredits.setAlignmentX(Component.CENTER_ALIGNMENT);
         buttonExit.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // 将按钮和垂直间距添加到面板中
+        // 将按钮和垂直间距添加到面板中 | Ajouter les boutons et les espacements verticaux au panneau
         menuPanel.add(buttonPlay);
         menuPanel.add(Box.createVerticalStrut(40));
         menuPanel.add(buttonHowTo);
@@ -101,10 +101,10 @@ public class FrameTetris {
 
         frame.add(menuPanel);
 
-        // Play 按钮 - 启动游戏
+        // Play 按钮 - 启动游戏 | Bouton Play - Démarrer le jeu
         buttonPlay.addActionListener(e -> startGame());
 
-        // How to Play 按钮，html代码居然也可也用！！！！
+        // How to Play 按钮，html代码居然也可也用！！！！ | Bouton How to Play, le code HTML fonctionne aussi !!
         buttonHowTo.addActionListener(e -> {
             Font newFont = new Font("SansSerif", Font.PLAIN, 28);
             UIManager.put("OptionPane.messageFont", newFont);
@@ -127,7 +127,7 @@ public class FrameTetris {
             JOptionPane.showMessageDialog(frame, howToMessage);
         });
 
-        // Credits 按钮
+        // Credits 按钮 | Bouton Credits
         buttonCredits.addActionListener(e -> {
             Font newFont = new Font("SansSerif", Font.PLAIN, 28);
             UIManager.put("OptionPane.messageFont", newFont);
@@ -147,7 +147,7 @@ public class FrameTetris {
             JOptionPane.showMessageDialog(frame, creditsMessage);
         });
 
-        // Exit 按钮
+        // Exit 按钮 | Bouton Exit
         buttonExit.addActionListener(e -> {
             System.exit(0);
         });
