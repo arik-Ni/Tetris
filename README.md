@@ -21,11 +21,11 @@ Ce projet est un jeu de Tetris classique développé avec Java et Swing. Il s'ag
 
 ```
 
-**Note:** All source code comments are written in Chinese.
+**Note:** All source code comments are written in Chinese and French.
 
-**Note :** Tous les commentaires dans le code source sont rédigés en chinois.
+**Note :** Tous les commentaires dans le code source sont rédigés en chinois et Français.
 
-**注意：** 所有源代码注释均使用中文编写。
+**注意：** 所有源代码注释均使用中文和法语编写。
 
 ---
 
