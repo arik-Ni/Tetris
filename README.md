@@ -51,7 +51,7 @@ This linear algebra approach makes the code scalable for any potential new shape
 
 ## Détails Techniques
 
-Ce projet est une implémentation du Tetris classique en Java Swing, articulée autour de trois classes :
+C'est un projet de Tetris classique en Java Swing que j'ai réalisé tout en apprenant, en articulant la logique autour de trois classes :
 
 * **FrameTetris** : Gère l'interface principale et la navigation. J'ai appris lors du développement que Java Swing permet d'intégrer du code HTML pour le rendu du texte, ce qui m'a permis d'enrichir l'interface de manière inattendue.
 * **GamePanel** : Le moteur du jeu contenant plus de 30 méthodes. Il gère le score, la réinitialisation, la prévisualisation de la prochaine pièce, et un système de délai d'effacement pour une fluidité optimale.
